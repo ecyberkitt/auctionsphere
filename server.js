@@ -10,10 +10,10 @@ const io = new Server(server);
 const PORT = process.env.PORT || 3000;
 const ADUR = 5 * 60 * 1000;
 
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(__dirname));
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "auctionsphere.html"));
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
 let users = [
