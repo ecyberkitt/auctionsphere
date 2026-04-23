@@ -56,8 +56,6 @@ function tick() {
       item.finalPrice = h.amount;
     }
   });
-
-  // io.emit("state", { users, items, notifs });
 }
 
 setInterval(tick, 1000);
@@ -96,6 +94,6 @@ io.on("connection", socket => {
   });
 });
 
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`Running on http://localhost:${PORT}`);
 });
