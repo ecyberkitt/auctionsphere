@@ -7,7 +7,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const ADUR = 5 * 60 * 1000;
 
 app.use(express.static(path.join(__dirname, "public")));
@@ -95,7 +95,6 @@ io.on("connection", socket => {
     io.emit("state", { users, items, notifs });
   });
 });
-const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Running on http://localhost:${PORT}`);
