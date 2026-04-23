@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AuctionSphere — Cloud Auction Platform</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-background-primary: #ffffff;
+      --color-background-secondary: #f5f5f4;
+      --color-background-tertiary: #eeede8;
+      --color-text-primary: #1a1a18;
+      --color-text-secondary: #6b6b68;
+      --color-text-tertiary: #9e9e9a;
+      --color-border-tertiary: rgba(0,0,0,0.12);
+      --color-border-secondary: rgba(0,0,0,0.25);
+      --color-border-primary: rgba(0,0,0,0.35);
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: 'SF Mono', 'Fira Code', monospace;
+      --border-radius-md: 8px;
+      --border-radius-lg: 12px;
+      --border-radius-xl: 16px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-background-primary: #1c1c1a;
+        --color-background-secondary: #252523;
+        --color-background-tertiary: #141412;
+        --color-text-primary: #f0ede6;
+        --color-text-secondary: #9b9994;
+        --color-text-tertiary: #6b6966;
+        --color-border-tertiary: rgba(255,255,255,0.10);
+        --color-border-secondary: rgba(255,255,255,0.22);
+        --color-border-primary: rgba(255,255,255,0.35);
+      }
+    }
+    body { font-family: var(--font-sans); background: var(--color-background-tertiary); color: var(--color-text-primary); min-height: 100vh; }
+    input, button, select, textarea { font-family: var(--font-sans); font-size: 14px; color: var(--color-text-primary); }
+    input[type="text"], input[type="number"] {
+      background: var(--color-background-primary);
+      border: 0.5px solid var(--color-border-secondary);
+      border-radius: var(--border-radius-md);
+      padding: 8px 12px;
+      height: 36px;
+      outline: none;
+      width: 100%;
+    }
+    input:focus { box-shadow: 0 0 0 2px rgba(100,100,200,0.25); border-color: var(--color-border-primary); }
+
+    /* ── Login ── */
+    .login-wrap { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
+    .login-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 2rem; width: 100%; max-width: 360px; }
+    .brand-row { display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; }
+    .brand-icon { width: 34px; height: 34px; border-radius: var(--border-radius-md); background: var(--color-text-primary); color: var(--color-background-primary); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+    .brand-name { font-size: 17px; font-weight: 600; }
+    .brand-sub { font-size: 12px; color: var(--color-text-secondary); }
+    .tog-row { display: flex; gap: 4px; margin-bottom: 1rem; }
+    .tog-btn { flex: 1; padding: 6px; border-radius: var(--border-radius-md); font-size: 13px; border: 0.5px solid var(--color-border-tertiary); cursor: pointer; background: none; color: var(--color-text-secondary); }
+    .tog-btn.on { background: var(--color-background-secondary); color: var(--color-text-primary); font-weight: 500; border-color: var(--color-border-secondary); }
+    .f-row { margin-bottom: 12px; }
+    .f-row label { display: block; font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+    .btn-full { width: 100%; background: var(--color-text-primary); color: var(--color-background-primary); border: none; padding: 9px; border-radius: var(--border-radius-md); font-size: 14px; cursor: pointer; margin-top: 4px; font-weight: 500; }
+    .btn-full:hover { opacity: .85; }
+    .msg-ok { background: #EAF3DE; color: #3B6D11; border: 0.5px solid #97C459; border-radius: var(--border-radius-md); padding: 8px 12px; font-size: 13px; margin-top: 10px; }
+    .msg-err { background: #FCEBEB; color: #A32D2D; border: 0.5px solid #F09595; border-radius: var(--border-radius-md); padding: 8px 12px; font-size: 13px; margin-top: 10px; }
+    .hint { font-size: 12px; color: var(--color-text-tertiary); margin-top: 1rem; text-align: center; }
+
+    /* ── App shell ── */
+    .main { display: flex; flex-direction: column; min-height: 100vh; }
+    .hdr { display: flex; align-items: center; justify-content: space-between; padding: 0 20px; height: 52px; border-bottom: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); flex-shrink: 0; }
+    .hdr-brand { font-size: 15px; font-weight: 600; }
+    .hdr-user { font-size: 13px; color: var(--color-text-secondary); }
+    .hdr-r { display: flex; align-items: center; gap: 8px; }
+    .hbtn { cursor: pointer; padding: 5px 12px; border-radius: var(--border-radius-md); font-size: 13px; border: 0.5px solid var(--color-border-tertiary); background: none; color: var(--color-text-primary); }
+    .hbtn:hover { background: var(--color-background-secondary); }
+    .tabs { display: flex; gap: 2px; padding: 0 20px; height: 44px; align-items: center; border-bottom: 0.5px solid var(--color-border-tertiary); background: var(--color-background-secondary); flex-shrink: 0; overflow-x: auto; }
+    .tab { cursor: pointer; padding: 5px 14px; border-radius: var(--border-radius-md); font-size: 13px; border: 0.5px solid transparent; color: var(--color-text-secondary); background: none; white-space: nowrap; }
+    .tab:hover { color: var(--color-text-primary); background: var(--color-background-primary); }
+    .tab.on { background: var(--color-background-primary); border-color: var(--color-border-tertiary); color: var(--color-text-primary); font-weight: 500; }
+    .tbadge { background: #E24B4A; color: #fff; font-size: 10px; border-radius: 8px; padding: 1px 5px; margin-left: 4px; vertical-align: middle; display: inline-block; }
+    .content { flex: 1; padding: 20px; background: var(--color-background-tertiary); overflow-y: auto; }
+
+    /* ── Metrics ── */
+    .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+    .metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px 16px; }
+    .metric-lbl { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+    .metric-val { font-size: 22px; font-weight: 500; }
+
+    /* ── Auction cards ── */
+    .sec-hd { font-size: 15px; font-weight: 500; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+    .ag { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+    .ac { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; }
+    .ac.dimmed { opacity: .6; }
+    .ac-hd { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 3px; gap: 8px; }
+    .ac-title { font-size: 15px; font-weight: 500; flex: 1; }
+    .bdg { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; display: inline-block; white-space: nowrap; }
+    .b-live { background: #EAF3DE; color: #3B6D11; }
+    .b-sold { background: var(--color-background-secondary); color: var(--color-text-secondary); }
+    .b-per { background: #FAEEDA; color: #854F0B; margin-left: 4px; }
+    .ac-desc { font-size: 13px; color: var(--color-text-secondary); margin: 4px 0 6px; }
+    .ac-seller { font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 10px; }
+    .bid-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .bid-amt { font-size: 20px; font-weight: 500; }
+    .bid-sub { font-size: 12px; color: var(--color-text-secondary); }
+    .tmr { font-size: 13px; font-family: var(--font-mono); padding: 3px 8px; border-radius: 4px; }
+    .t-ok { background: #EAF3DE; color: #3B6D11; }
+    .t-warn { background: #FAEEDA; color: #854F0B; }
+    .t-hot { background: #FCEBEB; color: #A32D2D; }
+    .bi-row { display: flex; gap: 6px; margin-top: 10px; }
+    .bi-row input { flex: 1; }
+    .bid-btn { background: var(--color-text-primary); color: var(--color-background-primary); border: none; padding: 0 14px; border-radius: var(--border-radius-md); font-size: 13px; cursor: pointer; height: 36px; white-space: nowrap; font-weight: 500; }
+    .bid-btn:hover { opacity: .85; }
+    .bh { margin-top: 8px; border-top: 0.5px solid var(--color-border-tertiary); padding-top: 8px; }
+    .bh-item { display: flex; justify-content: space-between; font-size: 12px; color: var(--color-text-secondary); padding: 2px 0; }
+    .bh-top { color: var(--color-text-primary); font-weight: 500; }
+    .won-box { margin-top: 8px; background: #EAF3DE; border-radius: var(--border-radius-md); padding: 8px 10px; font-size: 13px; color: #3B6D11; }
+    .lead-note { font-size: 12px; color: #3B6D11; margin-top: 6px; }
+    .own-note { font-size: 12px; color: var(--color-text-tertiary); margin-top: 10px; }
+
+    /* ── Offer ── */
+    .offer-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.5rem; max-width: 480px; }
+    .fr { margin-bottom: 14px; }
+    .fr label { display: block; font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+    .btn-sub { background: var(--color-text-primary); color: var(--color-background-primary); border: none; padding: 9px 24px; border-radius: var(--border-radius-md); font-size: 14px; cursor: pointer; font-weight: 500; }
+    .btn-sub:hover { opacity: .85; }
+
+    /* ── Notifications ── */
+    .nc { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 0 1.25rem; max-width: 600px; }
+    .ni { padding: 12px 0; border-bottom: 0.5px solid var(--color-border-tertiary); display: flex; gap: 10px; }
+    .ni:last-child { border-bottom: none; }
+    .nd { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+    .nd-win { background: #3B6D11; } .nd-sale { background: #185FA5; } .nd-bid { background: #854F0B; } .nd-info { background: var(--color-border-secondary); }
+    .ni-msg { font-size: 14px; margin-bottom: 2px; }
+    .ni-unread .ni-msg { font-weight: 500; }
+    .ni-time { font-size: 11px; color: var(--color-text-tertiary); }
+
+    /* ── Users ── */
+    .ug { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+    .uc { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; display: flex; align-items: flex-start; gap: 12px; }
+    .av { width: 40px; height: 40px; border-radius: 50%; background: #B5D4F4; color: #0C447C; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 500; flex-shrink: 0; }
+    .u-nm { font-size: 14px; font-weight: 500; }
+    .u-st { font-size: 12px; color: var(--color-text-secondary); margin: 2px 0; }
+    .u-btns { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .sbtn { font-size: 12px; padding: 3px 10px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); cursor: pointer; background: none; color: var(--color-text-primary); }
+    .sbtn:hover { background: var(--color-background-secondary); }
+    .sbtn-del { border-color: #F09595; color: #A32D2D; }
+    .sbtn-del:hover { background: #FCEBEB; }
+    .sbtn-sw { background: var(--color-text-primary); color: var(--color-background-primary); border-color: var(--color-text-primary); }
+    .you-tag { font-size: 11px; background: #EAF3DE; color: #3B6D11; padding: 1px 6px; border-radius: 4px; font-weight: 500; margin-left: 4px; }
+    .empty { text-align: center; padding: 3rem 1rem; color: var(--color-text-secondary); font-size: 14px; }
+    .policy-box { margin-top: 24px; max-width: 560px; background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; }
+    .policy-hd { font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+    .policy-body { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <!-- Login Screen -->
+  <div class="login-wrap" id="ls">
+    <div class="login-card">
+      <div class="brand-row">
+        <div class="brand-icon">AS</div>
+        <div>
+          <div class="brand-name">AuctionSphere</div>
+          <div class="brand-sub">Cloud Auction Platform</div>
+        </div>
+      </div>
+      <div class="tog-row">
+        <button class="tog-btn on" id="lt" onclick="setMode('login')">Sign In</button>
+        <button class="tog-btn" id="rt" onclick="setMode('reg')">Register</button>
+      </div>
+      <div id="lf">
+        <div class="f-row"><label>Your Name</label><input type="text" id="ln" placeholder="Enter your registered name" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+        <button class="btn-full" onclick="doLogin()">Sign In</button>
+      </div>
+      <div id="rf" style="display:none">
+        <div class="f-row"><label>Choose a Unique Name</label><input type="text" id="rn" placeholder="Enter a unique name" onkeydown="if(event.key==='Enter')doReg()"/></div>
+        <button class="btn-full" onclick="doReg()">Create Account</button>
+      </div>
+      <div id="lm"></div>
+      <p class="hint" id="lhint"></p>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div class="main" id="ma" style="display:none">
+    <div class="hdr">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="hdr-brand">AuctionSphere</div>
+        <div class="hdr-user" id="hu"></div>
+      </div>
+      <div class="hdr-r">
+        <button class="hbtn" onclick="goTab('notifs')">Notifications<span id="nhb"></span></button>
+        <button class="hbtn" onclick="logout()">Sign Out</button>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab on" id="tab-auctions" onclick="goTab('auctions')">Live Auctions</button>
+      <button class="tab" id="tab-offer" onclick="goTab('offer')">Offer Item</button>
+      <button class="tab" id="tab-activity" onclick="goTab('activity')">My Activity</button>
+      <button class="tab" id="tab-notifs" onclick="goTab('notifs')">Notifications <span id="ntb"></span></button>
+      <button class="tab" id="tab-users" onclick="goTab('users')">Users</button>
+    </div>
+    <div class="content" id="mc"></div>
+  </div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+var socket = io();
+var ADUR = 5 * 60 * 1000; // 5 minutes in ms
+var users = [], cuid = null, items = [], notifs = [], atab = 'auctions', bAmts = {}, interval;
+
+function gid() { return '_' + Math.random().toString(36).slice(2, 9); }
+function uname(id) { var u = users.find(function(x) { return x.id === id; }); return u ? u.name : 'Unknown'; }
+function unread() { return notifs.filter(function(n) { return n.userId === cuid && !n.read; }).length; }
+function ftime(ms) { if (ms <= 0) return '00:00'; var s = Math.floor(ms / 1000); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); }
+function fts(ts) { return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
+function tcls(r) { return r > 60000 ? 'tmr t-ok' : r > 30000 ? 'tmr t-warn' : 'tmr t-hot'; }
+function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+function topBid(item) {
+  if (!item.bids.length) return null;
+  return item.bids.reduce(function(b, x) {
+    if (!b) return x;
+    if (x.amount > b.amount) return x;
+    if (x.amount === b.amount && x.timestamp < b.timestamp) return x;
+    return b;
+  }, null);
+}
+
+function blocked(uid) {
+  var sa = items.some(function(i) { return i.status === 'active' && i.sellerId === uid; });
+  var lb = items.some(function(i) {
+    if (i.status !== 'active') return false;
+    var h = topBid(i); return h && h.userId === uid;
+  });
+  return { blocked: sa || lb, sa: sa, lb: lb };
+}
+
+function notify(uids, msg, type) {
+  type = type || 'info';
+  uids.forEach(function(uid) {
+    if (!users.find(function(u) { return u.id === uid; })) return;
+    notifs.unshift({ id: gid(), userId: uid, message: msg, type: type, timestamp: Date.now(), read: false });
+  });
+}
+
+function initState() {
+  users = [{ id: 'u1', name: 'Alice' }, { id: 'u2', name: 'Bob' }, { id: 'u3', name: 'Charlie' }];
+  cuid = null; atab = 'auctions'; bAmts = {}; notifs = []; items = [];
+  var now = Date.now();
+  var i1 = { id: 'i1', title: 'Vintage Film Camera Set', description: 'Three 1970s film cameras, all fully operational.', sellerId: 'u1', startingBid: 50, startTime: now - 130000, endTime: now + (ADUR - 130000), bids: [], status: 'active', winner: null, finalPrice: null, period: 1 };
+  var i2 = { id: 'i2', title: 'Custom Mechanical Keyboard', description: 'Cherry MX Blue switches, aluminum case, per-key RGB.', sellerId: 'u2', startingBid: 80, startTime: now - 65000, endTime: now + (ADUR - 65000), bids: [], status: 'active', winner: null, finalPrice: null, period: 1 };
+  i1.bids.push({ id: gid(), userId: 'u2', amount: 65, timestamp: now - 100000 }, { id: gid(), userId: 'u3', amount: 78, timestamp: now - 55000 });
+  i2.bids.push({ id: gid(), userId: 'u3', amount: 92, timestamp: now - 40000 });
+  items.push(i1, i2);
+}
+
+function tick() {
+  var now = Date.now(), changed = false;
+  items.forEach(function(item) {
+    if (item.status !== 'active' || now < item.endTime) return;
+    changed = true;
+    var h = topBid(item);
+    if (!h) {
+      item.startTime = now; item.endTime = now + ADUR; item.period++;
+      notify(users.map(function(u) { return u.id; }), '"' + item.title + '" had no bids. Auction restarted (period ' + item.period + ').');
+    } else {
+      item.status = 'sold'; item.winner = h.userId; item.finalPrice = h.amount;
+      notify([h.userId], 'You won "' + item.title + '" for $' + h.amount.toFixed(2) + '!', 'win');
+      notify([item.sellerId], '"' + item.title + '" sold to ' + uname(h.userId) + ' for $' + h.amount.toFixed(2) + '!', 'sale');
+      var losers = [...new Set(item.bids.map(function(b) { return b.userId; }))].filter(function(id) { return id !== h.userId; });
+      if (losers.length) notify(losers, 'You did not win "' + item.title + '". Final price: $' + h.amount.toFixed(2) + '.');
+    }
+  });
+  if (changed) fullRender(); else uptimers();
+}
+
+function uptimers() {
+  var now = Date.now();
+  items.forEach(function(item) {
+    if (item.status !== 'active') return;
+    var el = document.getElementById('tmr-' + item.id);
+    if (!el) return;
+    var r = item.endTime - now;
+    el.textContent = ftime(r); el.className = tcls(r);
+  });
+}
+
+function setMode(m) {
+  document.getElementById('lt').className = 'tog-btn' + (m === 'login' ? ' on' : '');
+  document.getElementById('rt').className = 'tog-btn' + (m === 'reg' ? ' on' : '');
+  document.getElementById('lf').style.display = m === 'login' ? '' : 'none';
+  document.getElementById('rf').style.display = m === 'reg' ? '' : 'none';
+  document.getElementById('lm').innerHTML = '';
+}
+
+function showLM(msg, ok) { document.getElementById('lm').innerHTML = '<div class="' + (ok ? 'msg-ok' : 'msg-err') + '">' + esc(msg) + '</div>'; }
+
+function doLogin() {
+  var n = (document.getElementById('ln').value || '').trim();
+  if (!n) { showLM('Please enter your name.', false); return; }
+  var u = users.find(function(x) { return x.name.toLowerCase() === n.toLowerCase(); });
+  if (!u) { showLM('Name not found. Please register first.', false); return; }
+  cuid = u.id; openApp();
+}
+
+function doReg() {
+  var n = (document.getElementById('rn').value || '').trim();
+  if (!n) { showLM('Please enter a name.', false); return; }
+  if (users.find(function(x) { return x.name.toLowerCase() === n.toLowerCase(); })) { showLM('That name is already taken.', false); return; }
+  var u = { id: gid(), name: n }; users.push(u); cuid = u.id; openApp();
+}
+
+function openApp() {
+  document.getElementById('ls').style.display = 'none';
+  document.getElementById('ma').style.display = 'flex';
+  if (!interval) interval = setInterval(tick, 1000);
+  fullRender();
+}
+
+function logout() {
+  cuid = null;
+  document.getElementById('ma').style.display = 'none';
+  document.getElementById('ls').style.display = '';
+  var el = document.getElementById('ln'); if (el) el.value = '';
+  document.getElementById('lm').innerHTML = '';
+  updHint();
+}
+
+function updHint() {
+  var h = document.getElementById('lhint');
+  if (h) h.textContent = 'Registered: ' + users.map(function(u) { return u.name; }).join(', ');
+}
+
+function goTab(t) {
+  atab = t;
+  if (t === 'notifs') notifs.filter(function(n) { return n.userId === cuid; }).forEach(function(n) { n.read = true; });
+  ['auctions', 'offer', 'activity', 'notifs', 'users'].forEach(function(x) {
+    var el = document.getElementById('tab-' + x);
+    if (el) el.className = 'tab' + (x === t ? ' on' : '');
+  });
+  renderCont(); updBadges();
+}
+
+function updBadges() {
+  var c = unread();
+  var hb = document.getElementById('nhb'); if (hb) hb.innerHTML = c ? '<span class="tbadge">' + c + '</span>' : '';
+  var tb = document.getElementById('ntb'); if (tb) tb.innerHTML = c ? '<span class="tbadge">' + c + '</span>' : '';
+}
+
+function fullRender() {
+  var cu = users.find(function(u) { return u.id === cuid; });
+  var hu = document.getElementById('hu'); if (hu) hu.textContent = cu ? 'Signed in as ' + cu.name : '';
+  renderCont(); updBadges(); updHint();
+}
+
+function renderCont() {
+  var el = document.getElementById('mc'); if (!el) return;
+  if (atab === 'auctions') el.innerHTML = rAuctions();
+  else if (atab === 'offer') el.innerHTML = rOffer();
+  else if (atab === 'activity') el.innerHTML = rActivity();
+  else if (atab === 'notifs') el.innerHTML = rNotifs();
+  else if (atab === 'users') el.innerHTML = rUsers();
+}
+
+function rAuctions() {
+  var now = Date.now();
+  var active = items.filter(function(i) { return i.status === 'active'; });
+  var totalB = items.reduce(function(s, i) { return s + i.bids.length; }, 0);
+  var h = '<div class="metrics"><div class="metric"><div class="metric-lbl">Live Auctions</div><div class="metric-val">' + active.length + '</div></div><div class="metric"><div class="metric-lbl">Total Bids Cast</div><div class="metric-val">' + totalB + '</div></div><div class="metric"><div class="metric-lbl">Registered Users</div><div class="metric-val">' + users.length + '</div></div></div>';
+  h += '<div class="sec-hd">Live Auctions <span style="font-size:12px;font-weight:400;color:var(--color-text-secondary)">' + active.length + ' active</span></div>';
+  if (!items.length) { h += '<div class="empty">No auctions yet. Go to Offer Item to start one.</div>'; return h; }
+  h += '<div class="ag">';
+  var sold = items.filter(function(i) { return i.status === 'sold'; });
+  var sorted = [].concat(active, sold);
+  sorted.forEach(function(item) {
+    var tb = topBid(item), rem = item.endTime - now;
+    var isOwn = item.sellerId === cuid, isLead = tb && tb.userId === cuid;
+    var bdg = '<span class="bdg ' + (item.status === 'active' ? 'b-live' : 'b-sold') + '">' + (item.status === 'active' ? 'Live' : 'Sold') + '</span>';
+    if (item.period > 1) bdg += '<span class="bdg b-per">Period ' + item.period + '</span>';
+    h += '<div class="ac' + (item.status === 'sold' ? ' dimmed' : '') + '"><div class="ac-hd"><div class="ac-title">' + esc(item.title) + '</div>' + bdg + '</div>';
+    h += '<div class="ac-desc">' + esc(item.description || 'No description') + '</div>';
+    h += '<div class="ac-seller">Seller: ' + esc(uname(item.sellerId)) + '</div>';
+    if (item.status === 'active') {
+      h += '<div class="bid-row"><div><div class="bid-amt">$' + (tb ? tb.amount.toFixed(2) : item.startingBid.toFixed(2)) + '</div><div class="bid-sub">' + (tb ? 'by ' + esc(uname(tb.userId)) : 'Starting bid') + '</div></div><span class="' + tcls(rem) + '" id="tmr-' + item.id + '">' + ftime(rem) + '</span></div>';
+      if (!isOwn) {
+        var mn = tb ? tb.amount + 0.01 : item.startingBid;
+        var cv = bAmts[item.id] || '';
+        h += '<div class="bi-row"><input type="number" step="0.01" min="' + mn.toFixed(2) + '" value="' + esc(cv) + '" placeholder="Min $' + mn.toFixed(2) + '" id="bid-' + item.id + '" oninput="saveBid(\'' + item.id + '\',this.value)"/><button class="bid-btn" onclick="submitBid(\'' + item.id + '\')">Bid</button></div>';
+        if (isLead) h += '<div class="lead-note">You are currently the highest bidder</div>';
+      } else {
+        h += '<div class="own-note">You are selling this item</div>';
+      }
+    } else {
+      h += '<div class="bid-row"><div><div class="bid-amt">$' + (item.finalPrice ? item.finalPrice.toFixed(2) : '—') + '</div><div class="bid-sub">Final price</div></div></div>';
+      h += '<div class="won-box">Won by ' + esc(uname(item.winner)) + '</div>';
+    }
+    if (item.bids.length) {
+      var srt = [].concat(item.bids).sort(function(a, b) { return b.timestamp - a.timestamp; });
+      h += '<div class="bh"><div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:4px">Bid history</div>';
+      srt.slice(0, 3).forEach(function(b, i) { h += '<div class="bh-item' + (i === 0 && item.status === 'active' ? ' bh-top' : '') + '"><span>' + esc(uname(b.userId)) + '</span><span>$' + b.amount.toFixed(2) + ' · ' + fts(b.timestamp) + '</span></div>'; });
+      h += '</div>';
+    }
+    h += '</div>';
+  });
+  h += '</div>'; return h;
+}
+
+function rOffer() {
+  var h = '<div class="sec-hd">Offer an Item for Auction</div>';
+  h += '<div class="offer-card"><div class="fr"><label>Item Title</label><input type="text" id="ot" placeholder="e.g. Vintage Leica M3"/></div><div class="fr"><label>Description</label><input type="text" id="od" placeholder="Brief description of the item"/></div><div class="fr"><label>Starting Bid (USD)</label><input type="number" id="ob" min="0" step="0.01" placeholder="0.00" style="max-width:160px"/></div><button class="btn-sub" onclick="submitOffer()">List for Auction</button><div id="om"></div></div>';
+  var mine = items.filter(function(i) { return i.sellerId === cuid; });
+  h += '<div style="margin-top:20px"><div class="sec-hd">My Listed Items</div>';
+  if (!mine.length) { h += '<div class="empty">You have not listed any items yet.</div>'; }
+  else {
+    var now = Date.now();
+    mine.forEach(function(item) {
+      var tb = topBid(item);
+      h += '<div class="ac" style="max-width:480px;margin-bottom:10px"><div class="ac-hd"><div class="ac-title">' + esc(item.title) + '</div><span class="bdg ' + (item.status === 'active' ? 'b-live' : 'b-sold') + '">' + (item.status === 'active' ? 'Live' : 'Sold') + '</span></div>';
+      h += '<div style="font-size:13px;color:var(--color-text-secondary);margin-top:4px">' + item.bids.length + ' bid' + (item.bids.length !== 1 ? 's' : '') + ' · ' + (item.status === 'active' ? ftime(item.endTime - now) + ' remaining' : 'Won by ' + esc(uname(item.winner))) + '</div>';
+      if (tb) h += '<div style="font-size:14px;margin-top:6px">Top bid: <strong>$' + tb.amount.toFixed(2) + '</strong> by ' + esc(uname(tb.userId)) + '</div>';
+      else h += '<div style="font-size:13px;color:var(--color-text-tertiary);margin-top:6px">No bids yet. Starting at $' + item.startingBid.toFixed(2) + '</div>';
+      h += '</div>';
+    });
+  }
+  h += '</div>'; return h;
+}
+
+function rActivity() {
+  var myBids = [];
+  items.forEach(function(item) { item.bids.filter(function(b) { return b.userId === cuid; }).forEach(function(b) { myBids.push({ item: item, bid: b }); }); });
+  myBids.sort(function(a, b) { return b.bid.timestamp - a.bid.timestamp; });
+  var wins = items.filter(function(i) { return i.status === 'sold' && i.winner === cuid; });
+  var h = '<div class="metrics"><div class="metric"><div class="metric-lbl">Total Bids Placed</div><div class="metric-val">' + myBids.length + '</div></div><div class="metric"><div class="metric-lbl">Items Won</div><div class="metric-val">' + wins.length + '</div></div><div class="metric"><div class="metric-lbl">Active Bids</div><div class="metric-val">' + myBids.filter(function(m) { return m.item.status === 'active'; }).length + '</div></div></div>';
+  h += '<div class="sec-hd">My Bidding History</div>';
+  if (!myBids.length) { h += '<div class="empty">You have not placed any bids yet. Browse Live Auctions to get started.</div>'; }
+  else myBids.forEach(function(m) {
+    var tb = topBid(m.item), lead = tb && tb.userId === cuid;
+    h += '<div class="ac" style="max-width:500px;margin-bottom:10px"><div class="ac-hd"><div class="ac-title">' + esc(m.item.title) + '</div><span class="bdg ' + (m.item.status === 'active' ? 'b-live' : 'b-sold') + '">' + (m.item.status === 'active' ? 'Live' : 'Sold') + '</span></div>';
+    h += '<div style="font-size:13px;margin-top:4px">Your bid: <strong>$' + m.bid.amount.toFixed(2) + '</strong> · ' + fts(m.bid.timestamp) + '</div>';
+    if (m.item.status === 'active') h += '<div style="font-size:12px;color:' + (lead ? '#3B6D11' : '#A32D2D') + ';margin-top:4px">' + (lead ? 'Leading' : 'Outbid — current: $' + (tb ? tb.amount.toFixed(2) : '—')) + '</div>';
+    else h += '<div style="font-size:12px;color:var(--color-text-secondary);margin-top:4px">' + (m.item.winner === cuid ? 'You won this item' : 'Won by ' + esc(uname(m.item.winner))) + '</div>';
+    h += '</div>';
+  });
+  return h;
+}
+
+function rNotifs() {
+  notifs.filter(function(n) { return n.userId === cuid; }).forEach(function(n) { n.read = true; });
+  updBadges();
+  var mine = notifs.filter(function(n) { return n.userId === cuid; });
+  var h = '<div class="sec-hd">Notifications</div>';
+  if (!mine.length) return h + '<div class="empty">No notifications yet. Start bidding or listing items!</div>';
+  h += '<div class="nc">';
+  mine.slice(0, 60).forEach(function(n) {
+    var dc = { win: 'nd-win', sale: 'nd-sale', bid: 'nd-bid', info: 'nd-info' }[n.type] || 'nd-info';
+    h += '<div class="ni' + (n.read ? '' : ' ni-unread') + '"><div class="nd ' + dc + '"></div><div><div class="ni-msg">' + esc(n.message) + '</div><div class="ni-time">' + fts(n.timestamp) + '</div></div></div>';
+  });
+  h += '</div>'; return h;
+}
+
+function rUsers() {
+  var h = '<div class="sec-hd">Registered Users <span style="font-size:12px;font-weight:400;color:var(--color-text-secondary)">' + users.length + ' registered</span></div>';
+  h += '<div class="ug">';
+  users.forEach(function(u) {
+    var ai = items.filter(function(i) { return i.status === 'active' && i.sellerId === u.id; }).length;
+    var al = items.filter(function(i) { if (i.status !== 'active') return false; var h2 = topBid(i); return h2 && h2.userId === u.id; }).length;
+    var isMe = u.id === cuid;
+    h += '<div class="uc"><div class="av">' + u.name[0].toUpperCase() + '</div><div style="flex:1"><div class="u-nm">' + esc(u.name) + (isMe ? '<span class="you-tag">You</span>' : '') + '</div><div class="u-st">' + ai + ' item' + (ai !== 1 ? 's' : '') + ' listed · ' + al + ' bid' + (al !== 1 ? 's' : '') + ' leading</div><div class="u-btns">' + (!isMe ? '<button class="sbtn sbtn-sw" onclick="swUser(\'' + u.id + '\')">Switch to ' + esc(u.name) + '</button>' : '') + '<button class="sbtn sbtn-del" onclick="deregUser(\'' + u.id + '\')">Deregister</button></div></div></div>';
+  });
+  h += '</div>';
+  h += '<div style="margin-top:20px"><div class="sec-hd" style="margin-bottom:8px">Register a New User</div><div style="display:flex;gap:8px;max-width:360px"><input type="text" id="nun" placeholder="Enter a unique name" style="flex:1"/><button class="btn-sub" onclick="addUser()">Register</button></div><div id="um"></div></div>';
+  h += '<div class="policy-box"><div class="policy-hd">Deregistration Policy</div><div class="policy-body">A user cannot deregister if they are currently offering an item for auction or are the highest bidder on any active auction. This ensures auction integrity throughout the bidding period.</div></div>';
+  return h;
+}
+
+function saveBid(itemId, val) { bAmts[itemId] = val; }
+
+function submitBid(itemId) {
+  var input = document.getElementById('bid-' + itemId);
+  if (!input) return;
+
+  var amt = parseFloat(input.value);
+  if (isNaN(amt)) return;
+
+  socket.emit("placeBid", {
+    itemId: itemId,
+    userId: cuid,
+    amount: amt
+  });
+
+  bAmts[itemId] = '';
+}
+
+function submitOffer() {
+  var t = (document.getElementById('ot') || {}).value || '';
+  var d = (document.getElementById('od') || {}).value || '';
+  var b = (document.getElementById('ob') || {}).value || '';
+
+  t = t.trim();
+  d = d.trim();
+
+  var om = document.getElementById('om');
+  if (!t) {
+    if (om) om.innerHTML = '<div class="msg-err">Please enter a title.</div>';
+    return;
+  }
+
+  var sb = parseFloat(b);
+  if (isNaN(sb) || sb < 0) {
+    if (om) om.innerHTML = '<div class="msg-err">Please enter a valid starting bid.</div>';
+    return;
+  }
+
+  socket.emit("createAuction", {
+    id: "_" + Math.random().toString(36).slice(2, 9),
+    title: t,
+    description: d,
+    startingBid: sb,
+    sellerId: cuid
+  });
+
+  if (om) om.innerHTML = '<div class="msg-ok">Auction created.</div>';
+}
+
+function swUser(uid) {
+  cuid = uid;
+  notifs.filter(function(n) { return n.userId === uid; }).forEach(function(n) { n.read = true; });
+  fullRender();
+}
+
+function deregUser(uid) {
+  var r = blocked(uid);
+  if (r.blocked) {
+    var reasons = [];
+    if (r.sa) reasons.push('currently offering an item for auction');
+    if (r.lb) reasons.push('currently the highest bidder on an active item');
+    var msg = 'Cannot deregister ' + esc(uname(uid)) + ': ' + reasons.join(' and ') + '.';
+    var um = document.getElementById('um');
+    if (um) um.innerHTML = '<div class="msg-err" style="max-width:400px;margin-top:8px">' + msg + '</div>';
+    else alert(msg);
+    return;
+  }
+  users = users.filter(function(u) { return u.id !== uid; });
+  notifs = notifs.filter(function(n) { return n.userId !== uid; });
+  if (cuid === uid) { cuid = null; document.getElementById('ma').style.display = 'none'; document.getElementById('ls').style.display = ''; updHint(); return; }
+  fullRender();
+  var um = document.getElementById('um');
+  if (um) um.innerHTML = '<div class="msg-ok" style="max-width:400px;margin-top:8px">User deregistered successfully.</div>';
+}
+
+function addUser() {
+  var el = document.getElementById('nun'), n = (el ? el.value : '').trim();
+  var um = document.getElementById('um');
+  if (!n) { if (um) um.innerHTML = '<div class="msg-err" style="max-width:360px;margin-top:8px">Please enter a name.</div>'; return; }
+  if (users.find(function(u) { return u.name.toLowerCase() === n.toLowerCase(); })) { if (um) um.innerHTML = '<div class="msg-err" style="max-width:360px;margin-top:8px">That name is already taken.</div>'; return; }
+  var u = { id: gid(), name: n }; users.push(u);
+  if (el) el.value = '';
+  fullRender();
+  var um2 = document.getElementById('um');
+  if (um2) um2.innerHTML = '<div class="msg-ok" style="max-width:360px;margin-top:8px">' + esc(n) + ' registered successfully!</div>';
+}
+socket.on("state", (data) => {
+  const titleEl = document.getElementById('ot');
+  const descEl = document.getElementById('od');
+  const bidEl = document.getElementById('ob');
+
+  const savedTitle = titleEl ? titleEl.value : "";
+  const savedDesc = descEl ? descEl.value : "";
+  const savedBid = bidEl ? bidEl.value : "";
+
+  const activeEl = document.activeElement;
+const activeId = activeEl ? activeEl.id : null;
+const activeValue = activeEl ? activeEl.value : null;
+
+  users = data.users || [];
+  items = data.items || [];
+  notifs = data.notifs || [];
+
+  if (!atab) {
+    atab = "auctions";
+  }
+
+  console.log("STATE RECEIVED:", items);
+
+  fullRender();
+
+  if (atab === 'offer') {
+    const newTitleEl = document.getElementById('ot');
+    const newDescEl = document.getElementById('od');
+    const newBidEl = document.getElementById('ob');
+
+    if (newTitleEl) newTitleEl.value = savedTitle;
+    if (newDescEl) newDescEl.value = savedDesc;
+    if (newBidEl) newBidEl.value = savedBid;
+
+    if (activeId) {
+  const el = document.getElementById(activeId);
+  if (el) {
+    el.focus();
+    if (activeValue !== null) {
+      el.value = activeValue;
+    }
+  }
+}
+}
+});
+// initState();
+updHint();
+</script>
+</body>
+</html>
